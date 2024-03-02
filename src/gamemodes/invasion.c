@@ -8,6 +8,7 @@ int			invasion_spawncount; // current spawns
 int			invasion_monsterspawns;
 int			invasion_navicount;
 int			invasion_start_navicount;
+int			invasion_bonus_levels = 0;
 edict_t		*INV_PlayerSpawns[64];
 edict_t		*INV_Navi[64];
 edict_t		*INV_StartNavi[64];
@@ -63,6 +64,7 @@ void INV_Init(void)
 	invasion_spawncount = 0;
 	invasion_navicount = 0;
 	invasion_start_navicount = 0;
+	invasion_bonus_levels = 0;
 
 	for (i = 0; i < 64; i++) {
 		INV_PlayerSpawns[i] = NULL;
@@ -427,12 +429,11 @@ void INV_AwardPlayers(void)
 
 edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 {
-	edict_t *monster;
+	edict_t *monster = vrx_create_new_drone(self, index, true, false, invasion_bonus_levels);
 	vec3_t	start;
-	trace_t	tr;
 	int mhealth = 1;
 
-	if (!(monster = vrx_create_new_drone(self, index, true, false)))
+	if (!monster)
 	{
 		//gi.dprintf("INV_SpawnDrone() failed to create a new type %d drone\n", index);
 		return NULL;
@@ -442,7 +443,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	VectorCopy(spawn_point->s.origin, start);
 	start[2] = spawn_point->absmax[2] + 1 + fabsf(monster->mins[2]);
 
-	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
+	trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
 	// starting point is occupied
 	if (tr.fraction < 1)
@@ -478,22 +479,6 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	monster->monsterinfo.aiflags |= AI_FIND_NAVI; // search for navi
 	monster->s.angles[YAW] = spawn_point->s.angles[YAW];
 	monster->prev_navi = NULL;
-
-
-	// az: we modify the monsters' health lightly
-	if (invasion->value == 1) // easy mode
-	{
-		if (invasion_difficulty_level < 5)
-			mhealth = 1;
-		else if (invasion_difficulty_level >= 5)
-			mhealth = 1 + 0.05 * log2(invasion_difficulty_level - 4);
-	}
-	else if (invasion->value == 2) // hard mode
-	{
-		float plog = log2(vrx_get_joined_players() + 1) / log2(4);
-		mhealth = 1 + 0.1 * invasion_difficulty_level * max(plog, 0);
-	}
-
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
 	// move the monster onto the spawn pad if it's not a boss
@@ -615,6 +600,20 @@ void INV_BossCheck(edict_t *self)
 		invasion_data.boss = NULL;
 }
 
+void INV_Change_Level(int amt)
+{
+	invasion_difficulty_level += amt;
+
+	if (invasion_difficulty_level > 1)
+		// fixed difficulty pacing
+		invasion_bonus_levels = (int)sqrt(invasion_difficulty_level - 1);
+	else
+	{
+		// cumulative difficulty
+		invasion_bonus_levels += (int)sqrt(invasion_difficulty_level);
+	}
+}
+
 void INV_OnTimeout(edict_t *self) {
 	qboolean was_boss = false;
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
@@ -633,15 +632,12 @@ void INV_OnTimeout(edict_t *self) {
 	// remove monsters from the current wave before spawning the next
 	if (self->num_monsters_real)
 		PVM_RemoveAllMonsters(self);
-	// restart the last wave
-	if (!was_boss)
-		invasion_difficulty_level -= 1;
 
 	// increase the difficulty level for the next wave
-	//if (invasion->value == 1)
-	//	invasion_difficulty_level += 1;
-	//else
-	//	invasion_difficulty_level += 2; // Hard mode.
+	if (invasion->value == 1)
+		INV_Change_Level(1);
+	else
+		INV_Change_Level(2); // Hard mode.
 	invasion_data.printedmessage = 0;
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
 
@@ -837,7 +833,7 @@ void INV_SpawnMonsters(edict_t *self)
 		{
 		    // az: reset the current wave to avoid people skipping waves
 		    if (self->num_monsters_real) {
-                invasion_difficulty_level -= 1;
+                INV_Change_Level(-1);
                 invasion_data.printedmessage = false;
                 PVM_RemoveAllMonsters(self);
             }
@@ -915,7 +911,8 @@ void INV_SpawnMonsters(edict_t *self)
 	if (invasion_data.mspawned >= max_monsters)
 	{
 		// increase the difficulty level for the next wave
-		invasion_difficulty_level += 1;
+		INV_Change_Level(1);
+
 		invasion_data.printedmessage = 0;
 		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;
@@ -1169,7 +1166,7 @@ void inv_defenderspawn_think(edict_t *self)
 
 		// try to spawn another
 		if ((level.time > self->wait)
-			&& (monster = vrx_create_new_drone(self, self->sounds, true, false)) != NULL)
+			&& (monster = vrx_create_new_drone(self, self->sounds, true, false, 0)) != NULL)
 		{
 			//gi.dprintf("%d: attempting to spawn a monster\n", num);
 			// get starting position

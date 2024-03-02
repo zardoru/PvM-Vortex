@@ -296,8 +296,9 @@ void OpenJoinMenu (edict_t *ent)
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	menu_add_line(ent, "Vortex Revival", MENU_GREEN_CENTERED);
-	menu_add_line(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+	menu_add_line(ent, "PvM/Vortex", MENU_GREEN_CENTERED);
+	menu_add_line(ent, hostname->string, MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("pvmtex v%s", VRX_VERSION), MENU_GREEN_CENTERED);
 	menu_add_line(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, " ", 0);
@@ -307,16 +308,14 @@ void OpenJoinMenu (edict_t *ent)
     menu_add_line(ent, "ability and weapon points", 0);
     menu_add_line(ent, "to become stronger!", 0);
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, "Maintained by", MENU_GREEN_CENTERED);
-	menu_add_line(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
-	menu_add_line(ent, "github.com/zardoru/vrxcl", MENU_WHITE_CENTERED);
+	menu_add_line(ent, "github.com/zardoru/pvm-vortex", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Start your reign", 1);
 	menu_add_line(ent, "Toggle chasecam", 2);
 	menu_add_line(ent, "Exit", 3);
 
 	menu_set_handler(ent, joinmenu_handler);
-	ent->client->menustorage.currentline = 16;
+	ent->client->menustorage.currentline = 15;
 	menu_show(ent);
 }
 

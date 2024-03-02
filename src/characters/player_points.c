@@ -81,68 +81,8 @@ double sigmoid (double x)
 
 double vrx_get_points_tnl (int level) 
 {
-    long    tnl = 0;
-    // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
-    long    max_exp_tnl = 50000;
-
-    // note: for loop below can be removed to make curve more 'S' like than current exponential curve by changing the max_exp_tnl, e.g. 250000
-    // for reference, the old system would return 149K TNL at level 20, whereas this one returns 546K
-    for (int i = 0; i <= level; i++) {
-        // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
-        double x = i - 5 - (0.5 * i);
-        tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
-        //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
-    }
-    if (tnl > 150000)
-        tnl = 150000;
-    return tnl;
+    return 370 * level * level + 1000;
 }
-
-#if 0
-double vrx_get_points_tnl(int level) {
-    static const double lowlv_curve[] = {
-        2500, // lv 0
-        7500,
-        15000,
-        25000,
-        40000,
-        50000, // lv 5
-        60000,
-        70000,
-        80000,
-        90000,
-        100000 // lv 10
-    };
-
-    if (level <= 10)
-        return lowlv_curve[level];
-
-
-    // we got these coefficients through a polyfit function with the following constraints:
-    /*
-         * lv_constraints = [
-		    [0,  5000,  1 / 3],       # One game to level up (a third of an hour is one game)
-		    [5,  10000, hrs_day * 1], # 1 day to level up
-		    [10, 20000, hrs_day * 1], # this constraint messes up polyfit
-		    [15, 25000, hrs_day * 3], # 3 days to lv. up
-		    [25, 50000, hrs_day * 7],  # 7 days to lv. up
-		    [50, 60000, hrs_day * 14]  # 14 days to lv. up
-		]
-    */
-
-    double x = min(level, 32);
-    double tnl_unrounded = 5.00000000e+03 +
-	    x * 5.30474274e+04 +
-	    pow(x, 2) * -1.33679341e+04 +
-	    pow(x, 3) * 1.08446320e+03  +
-	    pow(x, 4) * -1.75330061e+01 +
-	    pow(x, 5) * -2.30535750e-01 +
-	    pow(x, 6) * 5.23956950e-03;
-
-    // we don't really use those results as is though, we cap xp at around level 32 at approx. 3m xp/level.
-    return min(round(tnl_unrounded / 5000) * 5000, 3000000);
-}
-#endif
 
 void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 	qboolean levelup = false;
@@ -167,9 +107,10 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
         ent->myskills.next_level += points_needed;
 
         if (ent->myskills.level <= 10)
-            ent->myskills.speciality_points += 2;
+            ent->myskills.speciality_points += 4;
         else
-            ent->myskills.speciality_points += 1;
+            ent->myskills.speciality_points += 2;
+
         if (generalabmode->value && ent->myskills.class_num == CLASS_WEAPONMASTER)
             ent->myskills.weapon_points += 6;
         else // 4 points for everyone, only weaponmasters in generalabmode.

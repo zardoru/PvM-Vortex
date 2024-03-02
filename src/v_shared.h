@@ -26,8 +26,8 @@ int vrx_get_hard_max(int index, qboolean general, int class);
 void vrx_assign_abilities(edict_t *ent);
 
 
-#define DEFAULT_SOFTMAX 10
-#define GENERAL_SOFTMAX 5
+#define DEFAULT_SOFTMAX 20
+#define GENERAL_SOFTMAX 10
 
 typedef struct {
     int index;
