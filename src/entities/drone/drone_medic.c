@@ -629,16 +629,16 @@ void ED_CallSpawn (edict_t *ent);
 
 static vec3_t	mymedic_cable_offsets[] =
 {
-	45.0,  -9.2, 15.5,
-	48.4,  -9.7, 15.2,
-	47.8,  -9.8, 15.8,
-	47.3,  -9.3, 14.3,
-	45.4, -10.1, 13.1,
-	41.9, -12.7, 12.0,
-	37.8, -15.8, 11.2,
-	34.3, -18.4, 10.7,
-	32.7, -19.7, 10.4,
-	32.7, -19.7, 10.4
+	{ 45.0,  -9.2, 15.5, },
+	{ 48.4,  -9.7, 15.2, },
+	{ 47.8,  -9.8, 15.8, },
+	{ 47.3,  -9.3, 14.3, },
+	{ 45.4, -10.1, 13.1, },
+	{ 41.9, -12.7, 12.0, },
+	{ 37.8, -15.8, 11.2, },
+	{ 34.3, -18.4, 10.7, },
+	{ 32.7, -19.7, 10.4, },
+	{ 32.7, -19.7, 10.4 },
 };
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
@@ -875,7 +875,13 @@ void mymedic_cable_attack (edict_t *self)
 
 	// get muzzle location
 	AngleVectors(self->s.angles, forward, right, NULL);
-	VectorCopy(mymedic_cable_offsets[self->s.frame - FRAME_attack42], offset);
+
+	// az: whoops we've accidentally the memory. todo: fix this
+	int offs = self->s.frame - FRAME_attack42;
+	if (offs < 0 || offs > 9)
+		offs = 0;
+
+	VectorCopy(mymedic_cable_offsets[offs], offset);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 	// get end position
 	//VectorCopy(self->enemy->s.origin, end);

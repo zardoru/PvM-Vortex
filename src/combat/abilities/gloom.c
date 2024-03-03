@@ -2295,7 +2295,7 @@ void spikeball_move (edict_t *self)
     // are we following the player's crosshairs?
     if (self->activator->spikeball_follow)
     {
-        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL, PROJECT_HITBOX_FAR, false);
+        G_GetSpawnLocation(self->activator, 8192, self->mins, self->maxs, goalpos, NULL, PROJECT_HITBOX_FAR, false);
     }
         // we have no enemy
     else if (!self->enemy)
